@@ -21,101 +21,155 @@ export type FinalRound = {
   orderedAnswers: string[];
 };
 
+/** Board survey questions — answer counts follow the dataset (not padded to 6). */
 export const BOARD_QUESTIONS: SurveyQuestion[] = [
   {
     id: "bq-1",
-    prompt: "Name something people forget when leaving the house",
+    prompt:
+      "Bollywood films me doctor operation theatre se bahar aakar kya kehta hai?",
     answers: [
-      { text: "Keys", points: 32, aliases: ["house keys", "car keys"] },
-      { text: "Phone", points: 28, aliases: ["mobile", "cellphone"] },
-      { text: "Wallet", points: 18, aliases: ["purse"] },
-      { text: "Sunglasses", points: 10 },
-      { text: "Umbrella", points: 7 },
-      { text: "Water bottle", points: 5, aliases: ["bottle"] },
+      {
+        text: "Sorry wo nahi bach paye",
+        points: 53,
+        aliases: ["nahi bach paye", "sorry", "wo nahi bache"],
+      },
+      {
+        text: "Operation succesful",
+        points: 15,
+        aliases: ["operation successful", "successful", "succesful"],
+      },
+      {
+        text: "Bhagwan ka naam lijiye / Dua kijiye",
+        points: 10,
+        aliases: [
+          "bhagwan ka naam lijiye",
+          "dua kijiye",
+          "bhagwan ka naam",
+          "dua",
+        ],
+      },
+      {
+        text: "Wo ab khatre se bahar he",
+        points: 8,
+        aliases: ["khatre se bahar", "bahar he", "bahar hai"],
+      },
+      {
+        text: "Congratulations/Good news",
+        points: 5,
+        aliases: ["congratulations", "good news", "congrats"],
+      },
     ],
   },
   {
     id: "bq-2",
-    prompt: "Name a popular weekend activity for families",
+    prompt: "Couples pyaar se ek dusre ko kis naam se bulate hai?",
     answers: [
-      { text: "Movies", points: 30, aliases: ["cinema", "film"] },
-      { text: "Picnic", points: 22 },
-      { text: "Park", points: 18, aliases: ["playground"] },
-      { text: "Shopping", points: 14, aliases: ["mall"] },
-      { text: "Restaurant", points: 10, aliases: ["dining out", "eating out"] },
-      { text: "Board games", points: 6, aliases: ["games"] },
+      { text: "Jaan/Jaanu", points: 29, aliases: ["jaan", "jaanu"] },
+      { text: "Baby", points: 28 },
+      { text: "Babu", points: 21 },
+      { text: "My love", points: 11, aliases: ["love"] },
+      { text: "Honey", points: 4 },
+      { text: "Shona", points: 4 },
     ],
   },
   {
     id: "bq-3",
-    prompt: "Name something you find in a cricket stadium",
+    prompt: "Rohit sharma ki batting ke alawa aur kya accha lagta hai?",
     answers: [
-      { text: "Pitch", points: 28 },
-      { text: "Crowd", points: 24, aliases: ["fans", "audience"] },
-      { text: "Scoreboard", points: 18 },
-      { text: "Stumps", points: 14, aliases: ["wickets"] },
-      { text: "Vendors", points: 10, aliases: ["food stalls"] },
-      { text: "Cameras", points: 6 },
+      {
+        text: "Masti karna/ Daantna",
+        points: 34,
+        aliases: ["masti karna", "daantna", "masti", "daant"],
+      },
+      {
+        text: "Cool attitude",
+        points: 19,
+        aliases: ["attitude", "cool"],
+      },
+      {
+        text: "Style/ personality",
+        points: 14,
+        aliases: ["style", "personality"],
+      },
+      {
+        text: "Simplicity/Humble nature",
+        points: 6,
+        aliases: ["simplicity", "humble", "humble nature"],
+      },
     ],
   },
   {
     id: "bq-4",
-    prompt: "Name a dish people order at a wedding buffet",
+    prompt: "Log garden me ghumne kyu jaate hai?",
     answers: [
-      { text: "Paneer", points: 26, aliases: ["paneer butter masala"] },
-      { text: "Biryani", points: 24 },
-      { text: "Gulab jamun", points: 18, aliases: ["dessert", "sweets"] },
-      { text: "Naan", points: 14, aliases: ["roti", "bread"] },
-      { text: "Salad", points: 10 },
-      { text: "Ice cream", points: 8 },
+      {
+        text: "Fresh hawa khaane",
+        points: 42,
+        aliases: ["fresh hawa", "hawa khaane", "hawa"],
+      },
+      {
+        text: "Time spend karne/ romantic date pe",
+        points: 24,
+        aliases: [
+          "time spend karne",
+          "romantic date",
+          "date",
+          "time spend",
+        ],
+      },
+      {
+        text: "Walk/exercise",
+        points: 23,
+        aliases: ["walk", "exercise", "walking"],
+      },
+      {
+        text: "Acche nazaare dekhne",
+        points: 9,
+        aliases: ["nazaare", "nazaare dekhne", "scenery"],
+      },
     ],
   },
   {
     id: "bq-5",
-    prompt: "Name something kids argue about in the car",
+    prompt:
+      "Ek chiz jo cricket fans apni team ka luck badalne ke liye karte hai?",
     answers: [
-      { text: "Window seat", points: 34, aliases: ["seat"] },
-      { text: "Music", points: 22, aliases: ["songs", "radio"] },
-      { text: "AC", points: 16, aliases: ["temperature", "air"] },
-      { text: "Snacks", points: 12, aliases: ["food"] },
-      { text: "Touching", points: 9, aliases: ["space", "kicking"] },
-      { text: "Phone", points: 7, aliases: ["games", "tablet"] },
+      {
+        text: "Prayer/Chants",
+        points: 50,
+        aliases: ["prayer", "chants", "prayers", "chant"],
+      },
+      {
+        text: "Seat/Jagah change karna",
+        points: 25,
+        aliases: ["seat change", "jagah change", "seat", "jagah"],
+      },
+      {
+        text: "Fingers cross",
+        points: 7,
+        aliases: ["fingers crossed", "cross fingers"],
+      },
+      {
+        text: "Lucky jersey/ t-shirt",
+        points: 7,
+        aliases: ["lucky jersey", "jersey", "t-shirt", "tshirt", "lucky t-shirt"],
+      },
     ],
   },
   {
     id: "bq-6",
-    prompt: "Name a reason someone is late to a family dinner",
+    prompt: "Kitchen me milne wali ek chiz jise log chehre par lagate hai?",
     answers: [
-      { text: "Traffic", points: 36 },
-      { text: "Work", points: 22, aliases: ["office"] },
-      { text: "Getting ready", points: 16, aliases: ["dressing", "makeup"] },
-      { text: "Lost track of time", points: 12, aliases: ["forgot time"] },
-      { text: "Kids", points: 8 },
-      { text: "Wrong address", points: 6, aliases: ["directions"] },
-    ],
-  },
-  {
-    id: "bq-7",
-    prompt: "Name something people do first thing in the morning",
-    answers: [
-      { text: "Check phone", points: 30, aliases: ["phone", "social media"] },
-      { text: "Brush teeth", points: 24 },
-      { text: "Coffee", points: 18, aliases: ["tea", "chai"] },
-      { text: "Alarm snooze", points: 14, aliases: ["snooze", "alarm"] },
-      { text: "Stretch", points: 8, aliases: ["exercise", "yoga"] },
-      { text: "Shower", points: 6 },
-    ],
-  },
-  {
-    id: "bq-8",
-    prompt: "Name a gift people give at a housewarming",
-    answers: [
-      { text: "Plant", points: 28, aliases: ["flowers"] },
-      { text: "Kitchenware", points: 22, aliases: ["utensils", "cookware"] },
-      { text: "Sweets", points: 18, aliases: ["mithai", "dessert"] },
-      { text: "Decor", points: 14, aliases: ["frame", "painting"] },
-      { text: "Cash", points: 10, aliases: ["money", "envelope"] },
-      { text: "Wine", points: 8, aliases: ["bottle"] },
+      { text: "Haldi", points: 54, aliases: ["turmeric"] },
+      { text: "Besan", points: 22 },
+      { text: "Dahi", points: 6, aliases: ["curd", "yogurt"] },
+      { text: "Kheera", points: 4, aliases: ["cucumber"] },
+      {
+        text: "Chawal ka pani",
+        points: 3,
+        aliases: ["rice water", "chawal pani"],
+      },
+      { text: "Neembu", points: 3, aliases: ["nimbu", "lemon", "lime"] },
     ],
   },
 ];
@@ -176,16 +230,17 @@ export const RAPID_FIRE_SET: RapidFireSet = {
   ],
 };
 
+/** Jumble — answers ordered by survey popularity (highest first). */
 export const FINAL_ROUND: FinalRound = {
   id: "final-1",
-  prompt: "Rank the most common things people do on a Sunday morning",
+  prompt: "Ek aisa khana jiski khushbu se hi bhukh lag jaati ho?",
   orderedAnswers: [
-    "Sleep in",
-    "Have breakfast",
-    "Watch TV",
-    "Go for a walk",
-    "Read newspaper",
-    "Visit family",
+    "Biryani",
+    "Paaw bhaji",
+    "Noodles",
+    "Chhole bhature",
+    "Paneer ki sabji",
+    "Rajma chawal",
   ],
 };
 

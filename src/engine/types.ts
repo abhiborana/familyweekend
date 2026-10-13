@@ -66,7 +66,7 @@ export type GameState = {
   faceOffMemberName: string | null;
   /**
    * After a miss with nothing on the board: no #1-challenge face-off.
-   * Teams alternate on further misses; any top-6 hit wins control.
+   * Teams alternate on further misses; any survey-board hit wins control.
    */
   faceOffAfterMiss: boolean;
   roundPoints: number;

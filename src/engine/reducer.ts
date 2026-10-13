@@ -193,7 +193,7 @@ const applyFaceOffHit = (state: GameState, answerIndex: number): GameState => {
   };
   const hits = [...state.faceOffAnswers.filter((item) => !item.isMiss), entry];
 
-  // After any miss (no board challenge pending): any top-6 → that family plays
+  // After any miss (no board challenge pending): any survey hit → that family plays
   if (state.faceOffAfterMiss) {
     return beginMainPlay(
       { ...next, faceOffAnswers: hits, faceOffAfterMiss: false },
@@ -249,7 +249,7 @@ const applyFaceOffMiss = (state: GameState): GameState => {
   }
 
   // Miss with nothing on the board (or after prior misses):
-  // do not reopen buzzers — alternate answering team; next top-6 wins control
+  // do not reopen buzzers — alternate answering team; next survey hit wins control
   const other = getOpposingTeam(answeringTeam);
   return {
     ...state,
@@ -258,7 +258,7 @@ const applyFaceOffMiss = (state: GameState): GameState => {
     buzzerWinner: other,
     faceOffStep: "secondCaptain",
     ...clearAnswerWindow(),
-    message: `Incorrect. ${teamName(state, other)} answers next — any top-6 wins control.`,
+    message: `Incorrect. ${teamName(state, other)} answers next — any board answer wins control.`,
     ...cue(state, "strike"),
   };
 };
