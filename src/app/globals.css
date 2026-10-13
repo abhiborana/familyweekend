@@ -128,3 +128,96 @@
     @apply font-sans;
   }
 }
+
+/* TV board answer flip reveal */
+.board-flip-scene {
+  perspective: 1200px;
+}
+
+.board-flip-card {
+  display: grid;
+  width: 100%;
+  min-height: 5rem;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.board-flip-card.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.board-flip-card.is-just-revealed.is-flipped {
+  animation: board-flip-pop 0.65s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.board-flip-face {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.board-flip-back {
+  transform: rotateY(0deg);
+}
+
+.board-flip-front {
+  transform: rotateY(180deg);
+}
+
+@keyframes board-flip-pop {
+  0% {
+    transform: rotateY(0deg) scale(1);
+  }
+  55% {
+    transform: rotateY(180deg) scale(1.03);
+  }
+  100% {
+    transform: rotateY(180deg) scale(1);
+  }
+}
+
+.jumble-slot {
+  transition:
+    transform 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.jumble-slot-dragging {
+  transform: scale(1.04) translateY(-4px);
+  box-shadow: 0 12px 28px rgb(251 191 36 / 0.22);
+  animation: jumble-lift 0.45s ease-in-out infinite alternate;
+}
+
+.jumble-slot-target {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 2px rgb(125 211 252 / 0.35);
+}
+
+@keyframes jumble-lift {
+  from {
+    transform: scale(1.03) translateY(-2px);
+  }
+  to {
+    transform: scale(1.05) translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-flip-card {
+    transition: none;
+  }
+
+  .board-flip-card.is-just-revealed.is-flipped {
+    animation: none;
+  }
+
+  .jumble-slot {
+    transition: none;
+  }
+
+  .jumble-slot-dragging {
+    animation: none;
+  }
+}

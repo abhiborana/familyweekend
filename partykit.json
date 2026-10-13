@@ -1,0 +1,5 @@
+{
+  "name": "familyweekend",
+  "main": "party/gameRoom.ts",
+  "compatibilityDate": "2024-07-01"
+}

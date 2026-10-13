@@ -1,6 +1,5 @@
+import JoinHub from "@/components/JoinHub";
 
-export default function Home() {
-  return (
-    <div>Family Weekend</div>
-  );
-}
+const Home = () => <JoinHub />;
+
+export default Home;
