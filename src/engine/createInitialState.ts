@@ -54,6 +54,7 @@ export const createInitialState = (roomCode = ""): GameState => ({
   finalDraggingText: null,
   advancingTeam: null,
   tvView: "gameplay",
+  buzzerFocusOnTv: false,
   sfxCue: "none",
   sfxNonce: 0,
   confettiNonce: 0,

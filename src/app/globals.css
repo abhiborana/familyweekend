@@ -176,6 +176,165 @@
   }
 }
 
+/* TV view switches — remount via key on .tv-view-stage */
+.tv-view-stage {
+  animation: tv-view-in 0.55s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.tv-view-stage--branding {
+  animation-name: tv-view-brand;
+  animation-duration: 0.7s;
+}
+
+.tv-view-stage--scores {
+  animation-name: tv-view-scores;
+}
+
+.tv-view-stage--buzzer {
+  animation-name: tv-view-buzzer;
+}
+
+.tv-view-stage--rapid,
+.tv-view-stage--final,
+.tv-view-stage--gameplay {
+  animation-name: tv-view-play;
+}
+
+.tv-brand-logo {
+  animation: tv-logo-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tv-view-stage--scores .tv-brand-logo {
+  animation-duration: 0.55s;
+}
+
+.tv-focus-card--a {
+  animation: tv-card-from-left 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.08s;
+}
+
+.tv-focus-card--b {
+  animation: tv-card-from-right 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.16s;
+}
+
+.tv-view-eyebrow {
+  animation: tv-eyebrow-in 0.4s ease-out both;
+}
+
+.tv-gameplay-panel {
+  animation: tv-panel-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.06s;
+}
+
+@keyframes tv-view-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tv-view-brand {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tv-view-scores {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tv-view-buzzer {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tv-view-play {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tv-logo-rise {
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes tv-card-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-40px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes tv-card-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes tv-eyebrow-in {
+  from {
+    opacity: 0;
+    letter-spacing: 0.55em;
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 0.35em;
+  }
+}
+
+@keyframes tv-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .buzzer-waiting-card {
   animation: buzzer-pulse 1.4s ease-in-out infinite;
 }
@@ -272,5 +431,14 @@
   .buzzer-waiting-card,
   .buzzer-winner-card {
     animation: none;
+  }
+
+  .tv-view-stage,
+  .tv-brand-logo,
+  .tv-focus-card--a,
+  .tv-focus-card--b,
+  .tv-view-eyebrow,
+  .tv-gameplay-panel {
+    animation: none !important;
   }
 }

@@ -1,8 +1,5 @@
 "use client";
 
-import confetti from "canvas-confetti";
-import Image from "next/image";
-import { useEffect, type ReactNode } from "react";
 import ConnectionBadge from "@/components/ConnectionBadge";
 import { ASSETS } from "@/constants/assets";
 import { FINAL_ROUND } from "@/constants/questions";
@@ -10,6 +7,9 @@ import { getOpposingTeam, getRoundDisplayName } from "@/engine";
 import type { RapidAnswer } from "@/engine/types";
 import useGameRoom from "@/hooks/useGameRoom";
 import useSfxPlayer from "@/hooks/useSfxPlayer";
+import confetti from "canvas-confetti";
+import Image from "next/image";
+import { type ReactNode, useEffect } from "react";
 
 type TvPanelProps = {
   roomCode: string;
@@ -52,7 +52,7 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
 
   const tvQuestion =
     (state.questionVisibleOnTv || state.rapidQuestionVisible || state.finalQuestionVisible) &&
-    state.currentQuestion?.prompt
+      state.currentQuestion?.prompt
       ? state.currentQuestion.prompt
       : null;
 
@@ -66,86 +66,115 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
       (state.controllingTeam === "B" || state.buzzerWinner === "B"));
 
   const showBuzzerFocus =
-    state.tvView === "gameplay" &&
-    (state.buzzersOpen ||
-      (state.buzzerWinner !== null &&
-        (state.phase === "faceOff" || state.phase === "faceOffMember")));
+    state.tvView === "gameplay" && state.buzzerFocusOnTv;
+
+  const viewMode: TvViewMode =
+    state.tvView === "branding"
+      ? "branding"
+      : state.tvView === "scores"
+        ? "scores"
+        : showBuzzerFocus
+          ? "buzzer"
+          : showRapid
+            ? "rapid"
+            : showFinal
+              ? "final"
+              : "gameplay";
 
   if (state.tvView === "branding") {
     return (
-      <div className="relative grid min-h-[100dvh] place-items-center overflow-hidden bg-[#070b16] px-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(245,215,110,0.12),_transparent_55%)]" />
-        <Image
-          src={ASSETS.logoLite}
-          alt="Family Weekend"
-          width={560}
-          height={560}
-          priority
-          className="relative z-10 h-auto w-[min(72vw,26rem)] object-contain drop-shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
-        />
-      </div>
+      <TvViewStage key={viewMode} mode={viewMode}>
+        <div
+          className="relative grid min-h-[100dvh] place-items-center overflow-hidden px-6"
+          style={{ backgroundColor: "rgba(0, 13, 46)" }}
+        >
+          <Image
+            src={ASSETS.logoLite}
+            alt="Family Weekend"
+            width={560}
+            height={560}
+            priority
+            className="tv-brand-logo relative z-10 h-auto w-[min(72vw,26rem)] object-contain"
+          />
+        </div>
+      </TvViewStage>
     );
   }
 
   if (state.tvView === "scores") {
     return (
-      <TvShell>
-        <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-6xl flex-col items-center justify-center gap-10 px-6 py-10">
-          <p className="font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-[0.35em] text-amber-200/80">
-            Scores
-          </p>
+      <TvViewStage key={viewMode} mode={viewMode}>
+        <div
+          className="relative flex min-h-[100dvh] max-w-full flex-col items-center justify-center gap-8 px-6 py-10"
+          style={{ backgroundColor: "rgba(0, 13, 46)" }}
+        >
+          <Image
+            src={ASSETS.logoLite}
+            alt="Family Weekend"
+            width={220}
+            height={220}
+            priority
+            className="tv-brand-logo h-auto w-[min(40vw,11rem)] object-contain"
+          />
           <div className="grid w-full gap-6 md:grid-cols-2 md:gap-10">
             <TeamFocusCard
               name={state.familyA.name}
               score={state.familyA.score}
               showScore
+              motionClass="tv-focus-card tv-focus-card--a"
             />
             <TeamFocusCard
               name={state.familyB.name}
               score={state.familyB.score}
               showScore
+              motionClass="tv-focus-card tv-focus-card--b"
             />
           </div>
         </div>
-      </TvShell>
+      </TvViewStage>
     );
   }
 
   if (showBuzzerFocus) {
     const winner = state.buzzerWinner;
     return (
-      <TvShell>
-        <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-6xl flex-col items-center justify-center gap-10 px-6 py-10">
-          <p className="font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-[0.35em] text-amber-200/80">
-            {winner ? "Buzzed in" : "Buzzers open"}
-          </p>
-          <div className="grid w-full gap-6 md:grid-cols-2 md:gap-10">
-            <TeamFocusCard
-              name={state.familyA.name}
-              winner={winner === "A"}
-              waiting={state.buzzersOpen && !winner}
-              dimmed={winner !== null && winner !== "A"}
-            />
-            <TeamFocusCard
-              name={state.familyB.name}
-              winner={winner === "B"}
-              waiting={state.buzzersOpen && !winner}
-              dimmed={winner !== null && winner !== "B"}
-            />
-          </div>
-          {winner ? (
-            <p className="buzzer-winner-label font-[family-name:var(--font-heading)] text-3xl font-semibold text-amber-200 md:text-4xl">
-              {(winner === "A" ? state.familyA.name : state.familyB.name)} locked in
+      <TvViewStage key={viewMode} mode={viewMode}>
+        <TvShell>
+          <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-6xl flex-col items-center justify-center gap-10 px-6 py-10">
+            <p className="tv-view-eyebrow font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-[0.35em] text-amber-200/80">
+              {winner ? "Buzzed in" : "Buzzers open"}
             </p>
-          ) : null}
-        </div>
-      </TvShell>
+            <div className="grid w-full gap-6 md:grid-cols-2 md:gap-10">
+              <TeamFocusCard
+                name={state.familyA.name}
+                winner={winner === "A"}
+                waiting={state.buzzersOpen && !winner}
+                dimmed={winner !== null && winner !== "A"}
+                motionClass="tv-focus-card tv-focus-card--a"
+              />
+              <TeamFocusCard
+                name={state.familyB.name}
+                winner={winner === "B"}
+                waiting={state.buzzersOpen && !winner}
+                dimmed={winner !== null && winner !== "B"}
+                motionClass="tv-focus-card tv-focus-card--b"
+              />
+            </div>
+            {winner ? (
+              <p className="buzzer-winner-label font-[family-name:var(--font-heading)] text-3xl font-semibold text-amber-200 md:text-4xl">
+                {(winner === "A" ? state.familyA.name : state.familyB.name)} locked in
+              </p>
+            ) : null}
+          </div>
+        </TvShell>
+      </TvViewStage>
     );
   }
 
   return (
+    <TvViewStage key={viewMode} mode={viewMode}>
     <TvShell>
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-7xl flex-col px-6 py-5 md:px-10">
+      <div className="tv-gameplay-panel relative z-10 mx-auto flex min-h-[100dvh] max-w-7xl flex-col px-6 py-5 md:px-10">
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <Image
@@ -153,7 +182,7 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
               alt="Family Weekend"
               width={88}
               height={88}
-              className="h-auto w-[72px] object-contain md:w-[88px]"
+              className="h-auto w-[72px] object-contain md:w-[88px] rounded-full"
               priority
             />
             <div>
@@ -197,11 +226,10 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
                 {[0, 1, 2].map((index) => (
                   <span
                     key={index}
-                    className={`grid size-9 place-items-center rounded-lg border text-lg font-bold transition duration-300 md:size-10 md:text-xl ${
-                      index < state.strikes
-                        ? "scale-105 border-rose-400 bg-rose-500/30 text-rose-200"
-                        : "border-white/15 bg-black/30 text-white/25"
-                    }`}
+                    className={`grid size-9 place-items-center rounded-lg border text-lg font-bold transition duration-300 md:size-10 md:text-xl ${index < state.strikes
+                      ? "scale-105 border-rose-400 bg-rose-500/30 text-rose-200"
+                      : "border-white/15 bg-black/30 text-white/25"
+                      }`}
                   >
                     X
                   </span>
@@ -374,8 +402,27 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
         ) : null}
       </div>
     </TvShell>
+    </TvViewStage>
   );
 };
+
+type TvViewMode =
+  | "branding"
+  | "scores"
+  | "buzzer"
+  | "rapid"
+  | "final"
+  | "gameplay";
+
+const TvViewStage = ({
+  mode,
+  children,
+}: {
+  mode: TvViewMode;
+  children: ReactNode;
+}) => (
+  <div className={`tv-view-stage tv-view-stage--${mode}`}>{children}</div>
+);
 
 const TvShell = ({ children }: { children: ReactNode }) => (
   <div className="relative min-h-[100dvh] overflow-hidden bg-[#070b16] text-white">
@@ -398,6 +445,7 @@ type TeamFocusCardProps = {
   winner?: boolean;
   waiting?: boolean;
   dimmed?: boolean;
+  motionClass?: string;
 };
 
 const TeamFocusCard = ({
@@ -407,31 +455,34 @@ const TeamFocusCard = ({
   winner = false,
   waiting = false,
   dimmed = false,
+  motionClass = "",
 }: TeamFocusCardProps) => (
-  <div
-    className={`flex min-h-[14rem] flex-col items-center justify-center rounded-[2rem] border px-8 py-10 text-center transition duration-300 md:min-h-[18rem] ${
-      winner
-        ? "buzzer-winner-card scale-[1.03] border-amber-300/70 bg-amber-400/20 shadow-[0_0_60px_rgba(245,215,110,0.28)]"
-        : waiting
-          ? "buzzer-waiting-card border-white/20 bg-black/45"
-          : dimmed
-            ? "scale-95 border-white/10 bg-black/30 opacity-45"
-            : "border-amber-300/30 bg-black/40"
-    }`}
-  >
-    {winner ? (
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-amber-200">
-        First buzz
+  <div className={motionClass || undefined}>
+    <div
+      className={`flex min-h-[14rem] flex-col items-center justify-center rounded-[2rem] border px-8 py-10 text-center transition duration-300 md:min-h-[18rem] ${
+        winner
+          ? "buzzer-winner-card scale-[1.03] border-amber-300/70 bg-amber-400/20 shadow-[0_0_60px_rgba(245,215,110,0.28)]"
+          : waiting
+            ? "buzzer-waiting-card border-white/20 bg-black/45"
+            : dimmed
+              ? "scale-95 border-white/10 bg-black/30 opacity-45"
+              : "border-amber-300/30 bg-black/40"
+      }`}
+    >
+      {winner ? (
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-amber-200">
+          First buzz
+        </p>
+      ) : null}
+      <p className="font-[family-name:var(--font-heading)] text-4xl font-semibold tracking-tight text-white md:text-5xl lg:text-6xl">
+        {name}
       </p>
-    ) : null}
-    <p className="font-[family-name:var(--font-heading)] text-4xl font-semibold tracking-tight text-white md:text-5xl lg:text-6xl">
-      {name}
-    </p>
-    {showScore ? (
-      <p className="mt-6 font-[family-name:var(--font-heading)] text-7xl font-semibold tabular-nums text-amber-300 md:text-8xl">
-        {score}
-      </p>
-    ) : null}
+      {showScore ? (
+        <p className="mt-6 font-[family-name:var(--font-heading)] text-7xl font-semibold tabular-nums text-amber-300 md:text-8xl">
+          {score}
+        </p>
+      ) : null}
+    </div>
   </div>
 );
 
@@ -452,9 +503,8 @@ const BoardFlipCard = ({
 }: BoardFlipCardProps) => (
   <div className="board-flip-scene min-h-20">
     <div
-      className={`board-flip-card ${revealed ? "is-flipped" : ""} ${
-        justRevealed ? "is-just-revealed" : ""
-      }`}
+      className={`board-flip-card ${revealed ? "is-flipped" : ""} ${justRevealed ? "is-just-revealed" : ""
+        }`}
     >
       <div className="board-flip-face board-flip-back flex items-center justify-between rounded-2xl border border-white/10 bg-black/35 px-5 py-4">
         <div className="flex items-center gap-4">
@@ -467,11 +517,10 @@ const BoardFlipCard = ({
         </div>
       </div>
       <div
-        className={`board-flip-face board-flip-front flex items-center justify-between rounded-2xl border px-5 py-4 ${
-          justRevealed
-            ? "border-emerald-400/70 bg-emerald-500/25 shadow-[0_0_30px_rgba(52,211,153,0.25)]"
-            : "border-emerald-400/40 bg-emerald-500/15"
-        }`}
+        className={`board-flip-face board-flip-front flex items-center justify-between rounded-2xl border px-5 py-4 ${justRevealed
+          ? "border-emerald-400/70 bg-emerald-500/25 shadow-[0_0_30px_rgba(52,211,153,0.25)]"
+          : "border-emerald-400/40 bg-emerald-500/15"
+          }`}
       >
         <div className="flex items-center gap-4">
           <span className="grid size-10 place-items-center rounded-full bg-white/10 font-mono text-lg text-amber-200">
@@ -498,11 +547,10 @@ type ScorePillProps = {
 
 const ScorePill = ({ name, score, active, side, compact, badge }: ScorePillProps) => (
   <div
-    className={`rounded-2xl border px-3 py-2 transition duration-300 md:px-4 md:py-3 ${
-      active
-        ? "scale-[1.02] border-amber-300/50 bg-amber-400/15 shadow-[0_0_40px_rgba(245,215,110,0.15)]"
-        : "border-white/10 bg-black/35"
-    } ${side === "right" ? "md:text-right" : ""}`}
+    className={`rounded-2xl border px-3 py-2 transition duration-300 md:px-4 md:py-3 ${active
+      ? "scale-[1.02] border-amber-300/50 bg-amber-400/15 shadow-[0_0_40px_rgba(245,215,110,0.15)]"
+      : "border-white/10 bg-black/35"
+      } ${side === "right" ? "md:text-right" : ""}`}
   >
     {badge ? (
       <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-rose-300">
@@ -510,16 +558,14 @@ const ScorePill = ({ name, score, active, side, compact, badge }: ScorePillProps
       </p>
     ) : null}
     <p
-      className={`truncate font-[family-name:var(--font-heading)] font-semibold ${
-        compact ? "text-base md:text-lg" : "text-xl"
-      }`}
+      className={`truncate font-[family-name:var(--font-heading)] font-semibold ${compact ? "text-base md:text-lg" : "text-xl"
+        }`}
     >
       {name}
     </p>
     <p
-      className={`font-[family-name:var(--font-heading)] font-semibold tabular-nums text-amber-300 ${
-        compact ? "text-2xl md:text-3xl" : "text-4xl"
-      }`}
+      className={`font-[family-name:var(--font-heading)] font-semibold tabular-nums text-amber-300 ${compact ? "text-2xl md:text-3xl" : "text-4xl"
+        }`}
     >
       {score}
     </p>
@@ -560,17 +606,16 @@ const OrderColumn = ({
         return (
           <div
             key={`${title}-${item}-${index}`}
-            className={`jumble-slot rounded-2xl border px-4 py-3 text-center text-lg font-medium ${
-              isCorrect === true
-                ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-100"
-                : isCorrect === false
-                  ? "border-rose-400/40 bg-rose-500/15 text-rose-100"
-                  : isDragging
-                    ? "jumble-slot-dragging border-amber-300/70 bg-amber-400/25 text-amber-50"
-                    : isDropTarget
-                      ? "jumble-slot-target border-sky-300/60 bg-sky-500/20 text-sky-50"
-                      : "border-amber-300/30 bg-black/40"
-            }`}
+            className={`jumble-slot rounded-2xl border px-4 py-3 text-center text-lg font-medium ${isCorrect === true
+              ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-100"
+              : isCorrect === false
+                ? "border-rose-400/40 bg-rose-500/15 text-rose-100"
+                : isDragging
+                  ? "jumble-slot-dragging border-amber-300/70 bg-amber-400/25 text-amber-50"
+                  : isDropTarget
+                    ? "jumble-slot-target border-sky-300/60 bg-sky-500/20 text-sky-50"
+                    : "border-amber-300/30 bg-black/40"
+              }`}
           >
             <span className="mr-2 text-slate-500">{index + 1}.</span>
             {item}

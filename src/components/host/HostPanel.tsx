@@ -6,11 +6,13 @@ import ConnectionBadge from "@/components/ConnectionBadge";
 import FinalOrderDnd from "@/components/host/FinalOrderDnd";
 import { Button } from "@/components/ui/button";
 import {
+  ANSWER_WINDOW_SECONDS,
   FINAL_ROUND,
   RAPID_FIRE_SET,
   RAPID_FIRE_TARGET,
 } from "@/constants/questions";
 import { getRoundDisplayName } from "@/engine";
+import type { GamePhase, TeamId } from "@/engine/types";
 import useGameRoom from "@/hooks/useGameRoom";
 import useHostTimer from "@/hooks/useHostTimer";
 
@@ -151,7 +153,7 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
             </Button>
             <p className="text-xs text-slate-500">
               Now: {state.tvView}
-              {state.buzzersOpen || state.buzzerWinner ? " · buzzer focus when gameplay" : ""}
+              {state.buzzerFocusOnTv ? " · buzzer focus" : ""}
             </p>
           </div>
           <p className="md:col-span-4 text-sm text-slate-300">{state.message}</p>
@@ -284,7 +286,23 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
                   size="sm"
                   onClick={() => dispatch({ type: "REVEAL_QUESTION" })}
                 >
-                  Reveal question (10s)
+                  {state.questionVisibleOnTv ? "Hide question" : "Reveal question"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    dispatch({
+                      type: "START_TIMER",
+                      payload: {
+                        seconds: ANSWER_WINDOW_SECONDS,
+                        label: "Answer window",
+                      },
+                    })
+                  }
+                >
+                  Start {ANSWER_WINDOW_SECONDS}s timer
                 </Button>
                 <Button
                   type="button"
@@ -298,40 +316,19 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" onClick={() => dispatch({ type: "OPEN_BUZZERS" })}>
-                Open buzzers
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => dispatch({ type: "RESET_BUZZERS" })}
-              >
-                Reset buzzers
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => dispatch({ type: "FACEOFF_INCORRECT" })}
-              >
-                Incorrect answer
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => dispatch({ type: "GIVE_STRIKE" })}
-              >
-                Give strike ({state.strikes}/3)
-                {state.phase === "steal" ? " / fail steal" : ""}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => dispatch({ type: "AWARD_POINTS" })}
-              >
-                Award points
-              </Button>
-            </div>
+            <BoardPhaseActions
+              phase={state.phase}
+              buzzersOpen={state.buzzersOpen}
+              buzzerWinner={state.buzzerWinner}
+              buzzerFocusOnTv={state.buzzerFocusOnTv}
+              strikes={state.strikes}
+              onOpenBuzzers={() => dispatch({ type: "OPEN_BUZZERS" })}
+              onResetBuzzers={() => dispatch({ type: "RESET_BUZZERS" })}
+              onShowQuestion={() => dispatch({ type: "DISMISS_BUZZER_FOCUS" })}
+              onIncorrect={() => dispatch({ type: "FACEOFF_INCORRECT" })}
+              onStrike={() => dispatch({ type: "GIVE_STRIKE" })}
+              onAward={() => dispatch({ type: "AWARD_POINTS" })}
+            />
 
             <p className="text-sm text-slate-400">
               Answering:{" "}
@@ -339,7 +336,11 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
                 ? state.familyA.name
                 : state.buzzerWinner === "B"
                   ? state.familyB.name
-                  : "—"}
+                  : state.controllingTeam === "A"
+                    ? state.familyA.name
+                    : state.controllingTeam === "B"
+                      ? state.familyB.name
+                      : "—"}
               {" · "}
               Round total {state.roundPoints}
               {state.phase === "steal" ? " · STEAL" : ""}
@@ -365,7 +366,9 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
                   className={`rounded-xl border px-3 py-2 text-left transition ${
                     slot.revealed
                       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                      : "border-white/15 bg-black/20 hover:border-amber-300/50"
+                      : state.phase === "award"
+                        ? "border-sky-300/30 bg-sky-500/10 hover:border-sky-300/50"
+                        : "border-white/15 bg-black/20 hover:border-amber-300/50"
                   }`}
                 >
                   <span className="font-medium">
@@ -374,6 +377,7 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
                   </span>
                   <span className="ml-2 text-slate-400">
                     {answersHidden && !slot.revealed ? "" : slot.answer.points}
+                    {state.phase === "award" && !slot.revealed ? " · reveal only" : ""}
                   </span>
                 </button>
               ))}
@@ -495,7 +499,7 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
                 variant="secondary"
                 onClick={() => dispatch({ type: "REVEAL_QUESTION" })}
               >
-                Reveal question
+                {state.finalQuestionVisible ? "Hide question" : "Reveal question"}
               </Button>
               <Button
                 type="button"
@@ -584,6 +588,100 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
       </div>
     </div>
   );
+};
+
+type BoardPhaseActionsProps = {
+  phase: GamePhase;
+  buzzersOpen: boolean;
+  buzzerWinner: TeamId | null;
+  buzzerFocusOnTv: boolean;
+  strikes: number;
+  onOpenBuzzers: () => void;
+  onResetBuzzers: () => void;
+  onShowQuestion: () => void;
+  onIncorrect: () => void;
+  onStrike: () => void;
+  onAward: () => void;
+};
+
+const BoardPhaseActions = ({
+  phase,
+  buzzersOpen,
+  buzzerWinner,
+  buzzerFocusOnTv,
+  strikes,
+  onOpenBuzzers,
+  onResetBuzzers,
+  onShowQuestion,
+  onIncorrect,
+  onStrike,
+  onAward,
+}: BoardPhaseActionsProps) => {
+  const inTeamPlay = phase === "mainPlay" || phase === "steal";
+  const inFaceOff = phase === "faceOff" || phase === "faceOffMember";
+
+  if (phase === "award") {
+    return (
+      <p className="rounded-xl border border-amber-300/20 bg-amber-400/10 px-3 py-2 text-sm text-amber-100">
+        Play done for this question — tap hidden answers to reveal for the
+        audience (no points). Then use Next question.
+      </p>
+    );
+  }
+
+  if (inTeamPlay) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="destructive" onClick={onStrike}>
+          Give strike ({strikes}/3)
+          {phase === "steal" ? " / fail steal" : ""}
+        </Button>
+        <Button type="button" variant="outline" onClick={onAward}>
+          Award points
+        </Button>
+      </div>
+    );
+  }
+
+  if (buzzersOpen) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" onClick={onResetBuzzers}>
+          Reset buzzers
+        </Button>
+        <Button type="button" variant="secondary" onClick={onShowQuestion}>
+          Show question on TV
+        </Button>
+      </div>
+    );
+  }
+
+  if (buzzerWinner && inFaceOff) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="destructive" onClick={onIncorrect}>
+          Incorrect answer
+        </Button>
+        {buzzerFocusOnTv ? (
+          <Button type="button" variant="secondary" onClick={onShowQuestion}>
+            Show question on TV
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (inFaceOff) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" onClick={onOpenBuzzers}>
+          Open buzzers
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 type LoggedListProps = {

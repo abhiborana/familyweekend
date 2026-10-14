@@ -1,5 +1,4 @@
 import {
-  ANSWER_WINDOW_SECONDS,
   BOARD_QUESTIONS,
   BOARD_ROUND_COUNT,
   FINAL_ROUND,
@@ -133,11 +132,16 @@ const loadBoardQuestion = (
   };
 };
 
-const revealSlot = (state: GameState, answerIndex: number): GameState => {
+const revealSlot = (
+  state: GameState,
+  answerIndex: number,
+  options?: { countPoints?: boolean },
+): GameState => {
   if (!state.board[answerIndex] || state.board[answerIndex].revealed) {
     return state;
   }
 
+  const countPoints = options?.countPoints !== false;
   const board = state.board.map((slot, index) =>
     index === answerIndex ? { ...slot, revealed: true } : slot,
   );
@@ -146,9 +150,11 @@ const revealSlot = (state: GameState, answerIndex: number): GameState => {
     ...state,
     board,
     lastRevealedIndex: answerIndex,
-    roundPoints: board
-      .filter((slot) => slot.revealed)
-      .reduce((sum, slot) => sum + slot.answer.points, 0),
+    roundPoints: countPoints
+      ? board
+          .filter((slot) => slot.revealed)
+          .reduce((sum, slot) => sum + slot.answer.points, 0)
+      : state.roundPoints,
   };
 };
 
@@ -373,16 +379,22 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         message: "Game ended by host.",
       });
 
-    case "OPEN_BUZZERS":
+    case "OPEN_BUZZERS": {
+      if (state.phase !== "faceOff" && state.phase !== "faceOffMember") {
+        return state;
+      }
+      if (state.buzzersOpen) return state;
       return withUndo(state, {
         ...state,
         buzzersOpen: true,
         buzzerWinner: null,
         faceOffStep: "buzz",
-        phase: state.phase === "faceOffMember" ? "faceOff" : state.phase,
+        phase: "faceOff",
         tvView: "gameplay",
+        buzzerFocusOnTv: true,
         message: "Buzzers open!",
       });
+    }
 
     case "RESET_BUZZERS":
       return withUndo(state, {
@@ -396,7 +408,16 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         faceOffAfterMiss: false,
         phase: "faceOff",
         questionVisibleOnTv: false,
+        buzzerFocusOnTv: false,
         message: "Buzzers reset. Open again when ready.",
+      });
+
+    case "DISMISS_BUZZER_FOCUS":
+      return withUndo(state, {
+        ...state,
+        buzzerFocusOnTv: false,
+        tvView: "gameplay",
+        message: "TV: back to question / board.",
       });
 
     case "SET_TV_VIEW":
@@ -448,18 +469,20 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
       if (state.phase === "finalRound") {
         return withUndo(state, {
           ...state,
-          finalQuestionVisible: true,
-          questionVisibleOnTv: true,
-          message: "Jumble question revealed on TV.",
+          finalQuestionVisible: !state.finalQuestionVisible,
+          questionVisibleOnTv: !state.finalQuestionVisible,
+          message: state.finalQuestionVisible
+            ? "Jumble question hidden on TV."
+            : "Jumble question revealed on TV.",
         });
       }
+      const nextVisible = !state.questionVisibleOnTv;
       return withUndo(state, {
         ...state,
-        questionVisibleOnTv: true,
-        timerSeconds: ANSWER_WINDOW_SECONDS,
-        timerRunning: true,
-        timerLabel: "Answer window",
-        message: "Question revealed — 10 seconds to answer.",
+        questionVisibleOnTv: nextVisible,
+        message: nextVisible
+          ? "Question shown on TV."
+          : "Question hidden on TV.",
       });
     }
 
@@ -474,12 +497,17 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
       });
 
     case "REVEAL_ANSWER": {
-      const next = revealSlot(state, action.payload.answerIndex);
+      const knowledgeOnly = state.phase === "award";
+      const next = revealSlot(state, action.payload.answerIndex, {
+        countPoints: !knowledgeOnly,
+      });
       if (next === state) return state;
       return withUndo(state, {
         ...next,
         ...clearAnswerWindow(),
-        message: `Revealed: ${next.board[action.payload.answerIndex]?.answer.text}`,
+        message: knowledgeOnly
+          ? `Board reveal (no points): ${next.board[action.payload.answerIndex]?.answer.text}`
+          : `Revealed: ${next.board[action.payload.answerIndex]?.answer.text}`,
         ...cue(next, "revealAnswer"),
       });
     }
@@ -488,9 +516,22 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
       if (
         state.phase !== "mainPlay" &&
         state.phase !== "steal" &&
-        state.phase !== "faceOff"
+        state.phase !== "faceOff" &&
+        state.phase !== "award"
       ) {
         return state;
+      }
+
+      if (state.phase === "award") {
+        const next = revealSlot(state, action.payload.answerIndex, {
+          countPoints: false,
+        });
+        if (next === state) return state;
+        return withUndo(state, {
+          ...next,
+          message: `Board reveal (no points): ${next.board[action.payload.answerIndex]?.answer.text}`,
+          ...cue(next, "revealAnswer"),
+        });
       }
 
       if (state.phase === "faceOff") {
@@ -584,14 +625,12 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
     }
 
     case "AWARD_POINTS": {
-      if (allAnswersRevealed(state) && state.controllingTeam) {
+      if (state.phase === "award") return state;
+      if (state.controllingTeam) {
         return withUndo(state, awardRound(state, state.controllingTeam));
       }
       if (state.awardTeam) {
         return withUndo(state, awardRound(state, state.awardTeam));
-      }
-      if (state.controllingTeam) {
-        return withUndo(state, awardRound(state, state.controllingTeam));
       }
       return state;
     }

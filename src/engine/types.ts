@@ -100,6 +100,8 @@ export type GameState = {
   advancingTeam: TeamId | null;
   /** Host-controlled TV overlay. Branding/scores replace gameplay until toggled off. */
   tvView: TvView;
+  /** When true, TV shows the buzzer duel instead of the board/question. */
+  buzzerFocusOnTv: boolean;
   sfxCue: SfxCue;
   sfxNonce: number;
   confettiNonce: number;
@@ -119,6 +121,7 @@ export type GameAction =
   | { type: "END_GAME" }
   | { type: "OPEN_BUZZERS" }
   | { type: "RESET_BUZZERS" }
+  | { type: "DISMISS_BUZZER_FOCUS" }
   | { type: "SET_TV_VIEW"; payload: { view: TvView } }
   | { type: "LOCK_BUZZER"; payload: { teamId: TeamId } }
   | {
