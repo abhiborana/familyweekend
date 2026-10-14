@@ -21,6 +21,8 @@ export type GamePhase =
 
 export type FaceOffStep = "buzz" | "firstCaptain" | "secondCaptain" | "memberFallback";
 
+export type TvView = "gameplay" | "branding" | "scores";
+
 export type BoardSlot = {
   answer: SurveyAnswer;
   revealed: boolean;
@@ -96,6 +98,8 @@ export type GameState = {
   finalDragTo: number | null;
   finalDraggingText: string | null;
   advancingTeam: TeamId | null;
+  /** Host-controlled TV overlay. Branding/scores replace gameplay until toggled off. */
+  tvView: TvView;
   sfxCue: SfxCue;
   sfxNonce: number;
   confettiNonce: number;
@@ -115,6 +119,7 @@ export type GameAction =
   | { type: "END_GAME" }
   | { type: "OPEN_BUZZERS" }
   | { type: "RESET_BUZZERS" }
+  | { type: "SET_TV_VIEW"; payload: { view: TvView } }
   | { type: "LOCK_BUZZER"; payload: { teamId: TeamId } }
   | {
       type: "SUBMIT_FACEOFF_ANSWER";

@@ -53,6 +53,7 @@ export const createInitialState = (roomCode = ""): GameState => ({
   finalDragTo: null,
   finalDraggingText: null,
   advancingTeam: null,
+  tvView: "gameplay",
   sfxCue: "none",
   sfxNonce: 0,
   confettiNonce: 0,

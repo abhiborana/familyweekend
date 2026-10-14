@@ -176,6 +176,54 @@
   }
 }
 
+.buzzer-waiting-card {
+  animation: buzzer-pulse 1.4s ease-in-out infinite;
+}
+
+.buzzer-winner-card {
+  animation: buzzer-win-pop 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.buzzer-winner-label {
+  animation: buzzer-win-fade 0.45s ease-out;
+}
+
+@keyframes buzzer-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(251 191 36 / 0.12);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgb(251 191 36 / 0);
+  }
+}
+
+@keyframes buzzer-win-pop {
+  0% {
+    transform: scale(0.96);
+    filter: brightness(0.9);
+  }
+  60% {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+  }
+  100% {
+    transform: scale(1.03);
+    filter: brightness(1);
+  }
+}
+
+@keyframes buzzer-win-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .jumble-slot {
   transition:
     transform 0.2s cubic-bezier(0.32, 0.72, 0, 1),
@@ -218,6 +266,11 @@
   }
 
   .jumble-slot-dragging {
+    animation: none;
+  }
+
+  .buzzer-waiting-card,
+  .buzzer-winner-card {
     animation: none;
   }
 }

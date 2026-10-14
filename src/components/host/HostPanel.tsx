@@ -115,6 +115,45 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
               Undo
             </Button>
           </div>
+          <div className="md:col-span-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
+            <p className="mr-1 text-xs uppercase tracking-wider text-slate-400">
+              TV view
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant={state.tvView === "branding" ? "default" : "outline"}
+              onClick={() =>
+                dispatch({
+                  type: "SET_TV_VIEW",
+                  payload: {
+                    view: state.tvView === "branding" ? "gameplay" : "branding",
+                  },
+                })
+              }
+            >
+              {state.tvView === "branding" ? "Show gameplay" : "Branding view"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={state.tvView === "scores" ? "default" : "outline"}
+              onClick={() =>
+                dispatch({
+                  type: "SET_TV_VIEW",
+                  payload: {
+                    view: state.tvView === "scores" ? "gameplay" : "scores",
+                  },
+                })
+              }
+            >
+              {state.tvView === "scores" ? "Show gameplay" : "Scores view"}
+            </Button>
+            <p className="text-xs text-slate-500">
+              Now: {state.tvView}
+              {state.buzzersOpen || state.buzzerWinner ? " · buzzer focus when gameplay" : ""}
+            </p>
+          </div>
           <p className="md:col-span-4 text-sm text-slate-300">{state.message}</p>
         </section>
 

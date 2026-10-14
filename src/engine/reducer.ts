@@ -380,6 +380,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         buzzerWinner: null,
         faceOffStep: "buzz",
         phase: state.phase === "faceOffMember" ? "faceOff" : state.phase,
+        tvView: "gameplay",
         message: "Buzzers open!",
       });
 
@@ -396,6 +397,18 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         phase: "faceOff",
         questionVisibleOnTv: false,
         message: "Buzzers reset. Open again when ready.",
+      });
+
+    case "SET_TV_VIEW":
+      return withUndo(state, {
+        ...state,
+        tvView: action.payload.view,
+        message:
+          action.payload.view === "branding"
+            ? "TV: branding view"
+            : action.payload.view === "scores"
+              ? "TV: scores view"
+              : "TV: gameplay",
       });
 
     case "LOCK_BUZZER": {

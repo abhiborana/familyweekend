@@ -2,7 +2,7 @@
 
 import confetti from "canvas-confetti";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import ConnectionBadge from "@/components/ConnectionBadge";
 import { ASSETS } from "@/constants/assets";
 import { FINAL_ROUND } from "@/constants/questions";
@@ -65,17 +65,87 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
     (!stealerTeam &&
       (state.controllingTeam === "B" || state.buzzerWinner === "B"));
 
-  return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-[#070b16] text-white">
-      <Image
-        src={ASSETS.boardArt}
-        alt=""
-        fill
-        priority
-        className="object-cover opacity-35"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#070b16]/70 via-[#0b1220]/85 to-[#070b16]" />
+  const showBuzzerFocus =
+    state.tvView === "gameplay" &&
+    (state.buzzersOpen ||
+      (state.buzzerWinner !== null &&
+        (state.phase === "faceOff" || state.phase === "faceOffMember")));
 
+  if (state.tvView === "branding") {
+    return (
+      <TvShell>
+        <div className="relative z-10 grid min-h-[100dvh] place-items-center px-6">
+          <Image
+            src={ASSETS.brandMark}
+            alt="Family Weekend"
+            width={420}
+            height={420}
+            priority
+            className="h-auto w-[min(70vw,28rem)] drop-shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+          />
+        </div>
+      </TvShell>
+    );
+  }
+
+  if (state.tvView === "scores") {
+    return (
+      <TvShell>
+        <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-6xl flex-col items-center justify-center gap-10 px-6 py-10">
+          <p className="font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-[0.35em] text-amber-200/80">
+            Scores
+          </p>
+          <div className="grid w-full gap-6 md:grid-cols-2 md:gap-10">
+            <TeamFocusCard
+              name={state.familyA.name}
+              score={state.familyA.score}
+              showScore
+            />
+            <TeamFocusCard
+              name={state.familyB.name}
+              score={state.familyB.score}
+              showScore
+            />
+          </div>
+        </div>
+      </TvShell>
+    );
+  }
+
+  if (showBuzzerFocus) {
+    const winner = state.buzzerWinner;
+    return (
+      <TvShell>
+        <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-6xl flex-col items-center justify-center gap-10 px-6 py-10">
+          <p className="font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-[0.35em] text-amber-200/80">
+            {winner ? "Buzzed in" : "Buzzers open"}
+          </p>
+          <div className="grid w-full gap-6 md:grid-cols-2 md:gap-10">
+            <TeamFocusCard
+              name={state.familyA.name}
+              winner={winner === "A"}
+              waiting={state.buzzersOpen && !winner}
+              dimmed={winner !== null && winner !== "A"}
+            />
+            <TeamFocusCard
+              name={state.familyB.name}
+              winner={winner === "B"}
+              waiting={state.buzzersOpen && !winner}
+              dimmed={winner !== null && winner !== "B"}
+            />
+          </div>
+          {winner ? (
+            <p className="buzzer-winner-label font-[family-name:var(--font-heading)] text-3xl font-semibold text-amber-200 md:text-4xl">
+              {(winner === "A" ? state.familyA.name : state.familyB.name)} locked in
+            </p>
+          ) : null}
+        </div>
+      </TvShell>
+    );
+  }
+
+  return (
+    <TvShell>
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-7xl flex-col px-6 py-5 md:px-10">
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -170,13 +240,6 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
         )}
 
         <div className="mt-5 text-center">
-          {state.buzzerWinner &&
-          (state.phase === "faceOff" || state.phase === "faceOffMember") ? (
-            <p className="mb-3 inline-flex animate-[pulse_1s_ease-out_1] rounded-full bg-amber-400/20 px-4 py-1.5 text-sm font-semibold uppercase tracking-wider text-amber-200">
-              {(state.buzzerWinner === "A" ? state.familyA.name : state.familyB.name)}{" "}
-              buzzed in
-            </p>
-          ) : null}
           {tvQuestion ? (
             <p className="mx-auto max-w-4xl text-balance font-[family-name:var(--font-heading)] text-2xl font-medium text-white md:text-4xl">
               {tvQuestion}
@@ -313,9 +376,67 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
           </p>
         ) : null}
       </div>
-    </div>
+    </TvShell>
   );
 };
+
+const TvShell = ({ children }: { children: ReactNode }) => (
+  <div className="relative min-h-[100dvh] overflow-hidden bg-[#070b16] text-white">
+    <Image
+      src={ASSETS.boardArt}
+      alt=""
+      fill
+      priority
+      className="object-cover opacity-35"
+    />
+    <div className="absolute inset-0 bg-gradient-to-b from-[#070b16]/70 via-[#0b1220]/85 to-[#070b16]" />
+    {children}
+  </div>
+);
+
+type TeamFocusCardProps = {
+  name: string;
+  score?: number;
+  showScore?: boolean;
+  winner?: boolean;
+  waiting?: boolean;
+  dimmed?: boolean;
+};
+
+const TeamFocusCard = ({
+  name,
+  score = 0,
+  showScore = false,
+  winner = false,
+  waiting = false,
+  dimmed = false,
+}: TeamFocusCardProps) => (
+  <div
+    className={`flex min-h-[14rem] flex-col items-center justify-center rounded-[2rem] border px-8 py-10 text-center transition duration-300 md:min-h-[18rem] ${
+      winner
+        ? "buzzer-winner-card scale-[1.03] border-amber-300/70 bg-amber-400/20 shadow-[0_0_60px_rgba(245,215,110,0.28)]"
+        : waiting
+          ? "buzzer-waiting-card border-white/20 bg-black/45"
+          : dimmed
+            ? "scale-95 border-white/10 bg-black/30 opacity-45"
+            : "border-amber-300/30 bg-black/40"
+    }`}
+  >
+    {winner ? (
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-amber-200">
+        First buzz
+      </p>
+    ) : null}
+    <p className="font-[family-name:var(--font-heading)] text-4xl font-semibold tracking-tight text-white md:text-5xl lg:text-6xl">
+      {name}
+    </p>
+    {showScore ? (
+      <p className="mt-6 font-[family-name:var(--font-heading)] text-7xl font-semibold tabular-nums text-amber-300 md:text-8xl">
+        {score}
+      </p>
+    ) : null}
+  </div>
+);
 
 type BoardFlipCardProps = {
   index: number;
