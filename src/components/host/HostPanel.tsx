@@ -7,8 +7,6 @@ import FinalOrderDnd from "@/components/host/FinalOrderDnd";
 import { Button } from "@/components/ui/button";
 import {
   ANSWER_WINDOW_SECONDS,
-  FINAL_ROUND,
-  RAPID_FIRE_SET,
   RAPID_FIRE_TARGET,
 } from "@/constants/questions";
 import { getRoundDisplayName } from "@/engine";
@@ -398,7 +396,7 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
             </p>
             <p className="rounded-xl bg-black/30 px-3 py-2 font-medium">
               Q{state.rapidFireIndex + 1}:{" "}
-              {RAPID_FIRE_SET.questions[state.rapidFireIndex]?.prompt ?? "—"}
+              {state.rapidQuestions[state.rapidFireIndex]?.prompt ?? "—"}
             </p>
             <p className="text-xs text-slate-500">
               Deck:{" "}
@@ -491,7 +489,8 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
           <section className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-400">Jumble round</p>
             <p className="text-sm text-slate-400">
-              Host reference (not on TV until reveal): {FINAL_ROUND.prompt}
+              Host reference (not on TV until reveal):{" "}
+              {state.currentQuestion?.prompt ?? "—"}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -569,7 +568,8 @@ const HostPanel = ({ roomCode }: HostPanelProps) => {
             <p className="text-lg text-amber-200">{state.message}</p>
             {state.finalCorrectCount !== null ? (
               <p className="mt-2 text-slate-300">
-                Jumble: {state.finalCorrectCount}/{FINAL_ROUND.orderedAnswers.length} correct
+                Jumble: {state.finalCorrectCount}/{state.finalOrderedAnswers.length}{" "}
+                correct
               </p>
             ) : null}
             <p className="mt-3 text-sm text-slate-400">

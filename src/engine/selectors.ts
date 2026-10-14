@@ -1,8 +1,6 @@
 import {
-  BOARD_QUESTIONS,
-  FINAL_ROUND,
+  getBoardQuestionFromDeck,
   QUESTIONS_PER_BOARD_ROUND,
-  RAPID_FIRE_SET,
   RAPID_FIRE_TARGET,
   roundMultiplier,
 } from "../constants/questions";
@@ -15,7 +13,7 @@ export const getOpposingTeam = (teamId: TeamId): TeamId =>
   teamId === "A" ? "B" : "A";
 
 export const getCurrentBoardQuestion = (state: GameState) =>
-  BOARD_QUESTIONS[state.boardQuestionIndex] ?? null;
+  getBoardQuestionFromDeck(state.boardDeck, state.boardQuestionIndex);
 
 export const getRevealedPoints = (state: GameState): number =>
   state.board
@@ -42,16 +40,17 @@ export const rapidFireCombined = (state: GameState): number =>
 export const rapidFirePassed = (state: GameState): boolean =>
   rapidFireCombined(state) >= RAPID_FIRE_TARGET;
 
-export const getRapidQuestion = (index: number) =>
-  RAPID_FIRE_SET.questions[index] ?? null;
+export const getRapidQuestion = (state: GameState, index = state.rapidFireIndex) =>
+  state.rapidQuestions[index] ?? null;
 
-export const getFinalRound = () => FINAL_ROUND;
+export const getFinalOrderedAnswers = (state: GameState) =>
+  state.finalOrderedAnswers;
 
 export const questionsLeftInRound = (state: GameState): number =>
   QUESTIONS_PER_BOARD_ROUND - state.questionIndexInRound;
 
 export const boardQuestionsRemaining = (state: GameState): number =>
-  BOARD_QUESTIONS.length - state.boardQuestionIndex;
+  state.boardDeck.length - state.boardQuestionIndex;
 
 export const getRoundDisplayName = (state: GameState): string => {
   switch (state.phase) {

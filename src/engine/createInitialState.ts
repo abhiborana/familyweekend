@@ -1,3 +1,4 @@
+import { createShuffledBoardDeck } from "../constants/questions";
 import type { GameState } from "./types";
 
 export const createInitialState = (roomCode = ""): GameState => ({
@@ -16,6 +17,7 @@ export const createInitialState = (roomCode = ""): GameState => ({
   round: 1,
   questionIndexInRound: 0,
   boardQuestionIndex: 0,
+  boardDeck: createShuffledBoardDeck(),
   currentQuestion: null,
   board: [],
   strikes: 0,
@@ -32,8 +34,9 @@ export const createInitialState = (roomCode = ""): GameState => ({
   multiplier: 1,
   questionVisibleOnTv: false,
   lastRevealedIndex: null,
+  rapidQuestions: [],
   rapidFireIndex: 0,
-  rapidDeck: [0, 1, 2, 3, 4],
+  rapidDeck: [],
   rapidTimerStarted: false,
   rapidP1Answers: [],
   rapidP2Answers: [],
@@ -43,6 +46,7 @@ export const createInitialState = (roomCode = ""): GameState => ({
   timerSeconds: 0,
   timerRunning: false,
   timerLabel: "",
+  finalOrderedAnswers: [],
   finalJumbled: [],
   finalSubmitted: [],
   finalCorrect: null,

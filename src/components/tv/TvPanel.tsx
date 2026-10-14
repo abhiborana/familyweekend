@@ -2,7 +2,6 @@
 
 import ConnectionBadge from "@/components/ConnectionBadge";
 import { ASSETS } from "@/constants/assets";
-import { FINAL_ROUND } from "@/constants/questions";
 import { getOpposingTeam, getRoundDisplayName } from "@/engine";
 import type { RapidAnswer } from "@/engine/types";
 import useGameRoom from "@/hooks/useGameRoom";
@@ -297,19 +296,20 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
             {state.finalCorrectCount !== null ? (
               <>
                 <p className="text-center font-[family-name:var(--font-heading)] text-3xl text-amber-300">
-                  {state.finalCorrectCount}/{FINAL_ROUND.orderedAnswers.length} correct
+                  {state.finalCorrectCount}/{state.finalOrderedAnswers.length}{" "}
+                  correct
                   {state.finalCorrect ? " — grand prize!" : ""}
                 </p>
                 <div className="grid flex-1 gap-6 md:grid-cols-2">
                   <OrderColumn
                     title="Correct order"
-                    items={FINAL_ROUND.orderedAnswers}
-                    highlightAgainst={FINAL_ROUND.orderedAnswers}
+                    items={state.finalOrderedAnswers}
+                    highlightAgainst={state.finalOrderedAnswers}
                   />
                   <OrderColumn
                     title="Their order"
                     items={state.finalSubmitted}
-                    highlightAgainst={FINAL_ROUND.orderedAnswers}
+                    highlightAgainst={state.finalOrderedAnswers}
                   />
                 </div>
               </>
@@ -367,6 +367,7 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
                 answers={state.phase === "rapidFireP2" ? [] : state.rapidP1Answers}
                 total={state.rapidP1Total}
                 hidden={state.phase === "rapidFireP2"}
+                slots={state.rapidQuestions.length || 5}
               />
               <RapidColumn
                 title="Player 2"
@@ -375,6 +376,7 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
                 }
                 total={state.rapidP2Total}
                 hidden={state.phase === "rapidFireP1"}
+                slots={state.rapidQuestions.length || 5}
               />
             </div>
           </div>
@@ -631,9 +633,16 @@ type RapidColumnProps = {
   answers: RapidAnswer[];
   total: number;
   hidden: boolean;
+  slots: number;
 };
 
-const RapidColumn = ({ title, answers, total, hidden }: RapidColumnProps) => (
+const RapidColumn = ({
+  title,
+  answers,
+  total,
+  hidden,
+  slots,
+}: RapidColumnProps) => (
   <div className="rounded-2xl border border-white/10 bg-black/35 p-4">
     <div className="mb-3 flex items-baseline justify-between gap-2">
       <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{title}</p>
@@ -645,7 +654,7 @@ const RapidColumn = ({ title, answers, total, hidden }: RapidColumnProps) => (
       <p className="py-8 text-center text-sm text-slate-500">Hidden</p>
     ) : (
       <ul className="space-y-2">
-        {Array.from({ length: 5 }).map((_, index) => {
+        {Array.from({ length: slots }).map((_, index) => {
           const answer = answers.find((item) => item.questionIndex === index);
           return (
             <li

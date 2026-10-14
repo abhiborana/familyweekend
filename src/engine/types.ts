@@ -55,7 +55,10 @@ export type GameState = {
   familyB: Family;
   round: number;
   questionIndexInRound: number;
+  /** Position in this session's shuffled board deck (not a raw dataset index). */
   boardQuestionIndex: number;
+  /** Shuffled BOARD_QUESTIONS indexes for this game — no repeats within a session. */
+  boardDeck: number[];
   currentQuestion: SurveyQuestion | null;
   board: BoardSlot[];
   strikes: number;
@@ -76,8 +79,11 @@ export type GameState = {
   multiplier: number;
   questionVisibleOnTv: boolean;
   lastRevealedIndex: number | null;
+  /** Session rapid-fire set (random 5 from the shared pool). */
+  rapidQuestions: SurveyQuestion[];
+  /** Index into rapidQuestions for the active prompt. */
   rapidFireIndex: number;
-  /** Remaining question indexes to ask (pass moves current to the end). */
+  /** Remaining rapidQuestions indexes to ask (pass moves current to the end). */
   rapidDeck: number[];
   rapidTimerStarted: boolean;
   rapidP1Answers: RapidAnswer[];
@@ -88,6 +94,8 @@ export type GameState = {
   timerSeconds: number;
   timerRunning: boolean;
   timerLabel: string;
+  /** Correct jumble order for this session (built from survey points). */
+  finalOrderedAnswers: string[];
   finalJumbled: string[];
   finalSubmitted: string[];
   finalCorrect: boolean | null;

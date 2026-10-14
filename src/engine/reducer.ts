@@ -1,15 +1,18 @@
 import {
   BOARD_QUESTIONS,
   BOARD_ROUND_COUNT,
-  FINAL_ROUND,
-  FINAL_ROUND_SECONDS,
+  createShuffledBoardDeck,
+  getBoardQuestionFromDeck,
   MAX_STRIKES,
+  pickFinalRound,
+  pickRandomQuestions,
   QUESTIONS_PER_BOARD_ROUND,
   RAPID_FIRE_P1_SECONDS,
   RAPID_FIRE_P2_SECONDS,
-  RAPID_FIRE_SET,
+  RAPID_FIRE_QUESTION_COUNT,
   RAPID_FIRE_TARGET,
   roundMultiplier,
+  type FinalRound,
 } from "../constants/questions";
 import { createInitialState } from "./createInitialState";
 import { findAnswerIndex } from "./matchAnswer";
@@ -40,8 +43,6 @@ const cue = (
   confettiNonce: confetti ? state.confettiNonce + 1 : state.confettiNonce,
 });
 
-const RAPID_DECK = [0, 1, 2, 3, 4] as const;
-
 const clearFinalDrag = (): Pick<
   GameState,
   "finalDragFrom" | "finalDragTo" | "finalDraggingText"
@@ -51,15 +52,80 @@ const clearFinalDrag = (): Pick<
   finalDraggingText: null,
 });
 
+const rapidDeckForQuestions = (count: number): number[] =>
+  Array.from({ length: count }, (_, index) => index);
+
+const shuffle = <T,>(items: T[]): T[] => {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+
+const clearAnswerWindow = (): Pick<
+  GameState,
+  "questionVisibleOnTv" | "timerRunning" | "timerSeconds" | "timerLabel"
+> => ({
+  questionVisibleOnTv: false,
+  timerRunning: false,
+  timerSeconds: 0,
+  timerLabel: "",
+});
+
+const usedQuestionIds = (state: GameState): string[] => {
+  const boardIds = state.boardDeck
+    .slice(0, state.boardQuestionIndex + (state.currentQuestion ? 1 : 0))
+    .map((sourceIndex) => BOARD_QUESTIONS[sourceIndex]?.id)
+    .filter((id): id is string => Boolean(id));
+  const rapidIds = state.rapidQuestions.map((question) => question.id);
+  return [...new Set([...boardIds, ...rapidIds])];
+};
+
+const startFinalRoundState = (
+  state: GameState,
+  message: string,
+): GameState => {
+  const finalRound: FinalRound = pickFinalRound(usedQuestionIds(state));
+  const answerCount = finalRound.orderedAnswers.length;
+  return {
+    ...state,
+    phase: "finalRound",
+    currentQuestion: {
+      id: finalRound.id,
+      prompt: finalRound.prompt,
+      answers: finalRound.orderedAnswers.map((text, index) => ({
+        text,
+        points: answerCount - index,
+      })),
+    },
+    finalOrderedAnswers: finalRound.orderedAnswers,
+    finalJumbled: shuffle([...finalRound.orderedAnswers]),
+    finalSubmitted: [],
+    finalCorrect: null,
+    finalCorrectCount: null,
+    finalQuestionVisible: false,
+    finalOptionsVisible: false,
+    ...clearFinalDrag(),
+    board: [],
+    buzzersOpen: false,
+    rapidQuestionVisible: false,
+    ...clearAnswerWindow(),
+    message,
+  };
+};
+
 const finishRapidPlayerState = (state: GameState): GameState => {
   if (state.phase === "rapidFireP1") {
+    const rapidDeck = rapidDeckForQuestions(state.rapidQuestions.length);
     return {
       ...state,
       phase: "rapidFireP2",
       rapidFireIndex: 0,
-      rapidDeck: [...RAPID_DECK],
+      rapidDeck,
       rapidTimerStarted: false,
-      currentQuestion: RAPID_FIRE_SET.questions[0] ?? null,
+      currentQuestion: state.rapidQuestions[0] ?? null,
       rapidQuestionVisible: false,
       questionVisibleOnTv: false,
       timerSeconds: RAPID_FIRE_P2_SECONDS,
@@ -84,21 +150,11 @@ const finishRapidPlayerState = (state: GameState): GameState => {
   return state;
 };
 
-const clearAnswerWindow = (): Pick<
-  GameState,
-  "questionVisibleOnTv" | "timerRunning" | "timerSeconds" | "timerLabel"
-> => ({
-  questionVisibleOnTv: false,
-  timerRunning: false,
-  timerSeconds: 0,
-  timerLabel: "",
-});
-
 const loadBoardQuestion = (
   state: GameState,
   boardQuestionIndex: number,
 ): Partial<GameState> => {
-  const question = BOARD_QUESTIONS[boardQuestionIndex];
+  const question = getBoardQuestionFromDeck(state.boardDeck, boardQuestionIndex);
   if (!question) {
     return {
       message: "No more board questions in the dataset.",
@@ -287,20 +343,14 @@ const awardRound = (state: GameState, teamId: TeamId): GameState => {
   };
 };
 
-const shuffle = <T,>(items: T[]): T[] => {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-};
-
 const advanceAfterBoardQuestion = (state: GameState): GameState => {
   const nextQuestionInRound = state.questionIndexInRound + 1;
   const nextBoardIndex = state.boardQuestionIndex + 1;
 
-  if (nextQuestionInRound < QUESTIONS_PER_BOARD_ROUND && BOARD_QUESTIONS[nextBoardIndex]) {
+  if (
+    nextQuestionInRound < QUESTIONS_PER_BOARD_ROUND &&
+    getBoardQuestionFromDeck(state.boardDeck, nextBoardIndex)
+  ) {
     return {
       ...state,
       questionIndexInRound: nextQuestionInRound,
@@ -361,6 +411,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         familyB: { ...state.familyB, score: 0 },
         round: 1,
         questionIndexInRound: 0,
+        boardDeck: createShuffledBoardDeck(),
       };
       return withUndo(state, {
         ...base,
@@ -636,11 +687,8 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
     }
 
     case "NEXT_QUESTION": {
-      const nextBoardIndex =
-        state.phase === "award" || allAnswersRevealed(state)
-          ? state.boardQuestionIndex + 1
-          : state.boardQuestionIndex + 1;
-      if (!BOARD_QUESTIONS[nextBoardIndex]) {
+      const nextBoardIndex = state.boardQuestionIndex + 1;
+      if (!getBoardQuestionFromDeck(state.boardDeck, nextBoardIndex)) {
         return withUndo(state, {
           ...state,
           message: "No more survey questions — jump to Rapid fire or Jumble.",
@@ -670,29 +718,38 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
 
     case "GO_TO_BOARD_ROUND": {
       const round = action.payload.round;
+      const startingFresh =
+        state.phase === "setup" ||
+        state.phase === "winner" ||
+        (round === 1 && state.boardQuestionIndex === 0 && !state.currentQuestion);
+      const boardDeck = startingFresh
+        ? createShuffledBoardDeck()
+        : state.boardDeck;
       const advanceIndex =
         state.phase === "award" ||
         state.phase === "eliminated" ||
         state.phase.startsWith("rapid") ||
         state.phase === "finalRound" ||
         state.phase === "winner";
-      const boardIndex = Math.min(
-        advanceIndex && state.currentQuestion
-          ? state.boardQuestionIndex + 1
-          : state.boardQuestionIndex,
-        BOARD_QUESTIONS.length - 1,
-      );
-      if (!BOARD_QUESTIONS[boardIndex]) {
+      const boardIndex = startingFresh
+        ? 0
+        : Math.min(
+            advanceIndex && state.currentQuestion
+              ? state.boardQuestionIndex + 1
+              : state.boardQuestionIndex,
+            boardDeck.length - 1,
+          );
+      if (!getBoardQuestionFromDeck(boardDeck, boardIndex)) {
         return withUndo(state, {
           ...state,
           message: "No board questions left — use Rapid fire or Jumble.",
         });
       }
+      const withDeck = { ...state, round, boardDeck };
       return withUndo(state, {
-        ...state,
-        round,
+        ...withDeck,
         questionIndexInRound: 0,
-        ...loadBoardQuestion({ ...state, round }, boardIndex),
+        ...loadBoardQuestion(withDeck, boardIndex),
         message:
           round === 1
             ? "Single points round — open buzzers when ready."
@@ -702,18 +759,24 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
       });
     }
 
-    case "GO_TO_RAPID_FIRE":
+    case "GO_TO_RAPID_FIRE": {
+      const rapidQuestions = pickRandomQuestions(
+        RAPID_FIRE_QUESTION_COUNT,
+        usedQuestionIds(state),
+      );
+      const rapidDeck = rapidDeckForQuestions(rapidQuestions.length);
       return withUndo(state, {
         ...state,
         phase: "rapidFireP1",
+        rapidQuestions,
         rapidFireIndex: 0,
-        rapidDeck: [...RAPID_DECK],
+        rapidDeck,
         rapidTimerStarted: false,
         rapidP1Answers: [],
         rapidP2Answers: [],
         rapidP1Total: 0,
         rapidP2Total: 0,
-        currentQuestion: RAPID_FIRE_SET.questions[0] ?? null,
+        currentQuestion: rapidQuestions[0] ?? null,
         rapidQuestionVisible: false,
         questionVisibleOnTv: false,
         board: [],
@@ -725,34 +788,16 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         message:
           "Rapid fire — Player 1. Reveal to start one 30s timer for all 5 questions.",
       });
-
-    case "GO_TO_JUMBLE": {
-      const jumbled = shuffle([...FINAL_ROUND.orderedAnswers]);
-      return withUndo(state, {
-        ...state,
-        phase: "finalRound",
-        currentQuestion: {
-          id: FINAL_ROUND.id,
-          prompt: FINAL_ROUND.prompt,
-          answers: FINAL_ROUND.orderedAnswers.map((text, index) => ({
-            text,
-            points: 6 - index,
-          })),
-        },
-        finalJumbled: jumbled,
-        finalSubmitted: [],
-        finalCorrect: null,
-        finalCorrectCount: null,
-        finalQuestionVisible: false,
-        finalOptionsVisible: false,
-        ...clearFinalDrag(),
-        board: [],
-        buzzersOpen: false,
-        rapidQuestionVisible: false,
-        ...clearAnswerWindow(),
-        message: "Jumble round — reveal question, then reveal options.",
-      });
     }
+
+    case "GO_TO_JUMBLE":
+      return withUndo(
+        state,
+        startFinalRoundState(
+          state,
+          "Jumble round — reveal question, then reveal options.",
+        ),
+      );
 
     case "FORCE_PHASE":
       return withUndo(state, {
@@ -805,7 +850,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         return state;
       }
       const questionIndex = state.rapidFireIndex;
-      const question = RAPID_FIRE_SET.questions[questionIndex];
+      const question = state.rapidQuestions[questionIndex];
       if (!question) return state;
 
       const alreadyAnswered =
@@ -848,8 +893,9 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
 
       const rapidDeck = state.rapidDeck.filter((i) => i !== questionIndex);
       const nextIndex = rapidDeck[0] ?? questionIndex;
-      const nextQuestion = RAPID_FIRE_SET.questions[nextIndex] ?? question;
+      const nextQuestion = state.rapidQuestions[nextIndex] ?? question;
       const timerStillGoing = state.timerRunning && state.timerSeconds > 0;
+      const rapidCount = state.rapidQuestions.length;
 
       if (state.phase === "rapidFireP1") {
         const rapidP1Answers = [...state.rapidP1Answers, entry];
@@ -857,8 +903,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
           (sum, item) => sum + item.points,
           0,
         );
-        const finished =
-          rapidP1Answers.length >= RAPID_FIRE_SET.questions.length;
+        const finished = rapidP1Answers.length >= rapidCount;
         const nextState: GameState = {
           ...state,
           rapidP1Answers,
@@ -869,7 +914,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
           rapidQuestionVisible: finished ? false : timerStillGoing,
           questionVisibleOnTv: finished ? false : timerStillGoing,
           message: finished
-            ? `P1 answered all 5 — ${rapidP1Total} pts.`
+            ? `P1 answered all ${rapidCount} — ${rapidP1Total} pts.`
             : `Logged (+${points}). ${rapidDeck.length} left in the deck.`,
         };
         if (finished) {
@@ -883,8 +928,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         (sum, item) => sum + item.points,
         0,
       );
-      const finished =
-        rapidP2Answers.length >= RAPID_FIRE_SET.questions.length;
+      const finished = rapidP2Answers.length >= rapidCount;
       const nextState: GameState = {
         ...state,
         rapidP2Answers,
@@ -895,7 +939,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         rapidQuestionVisible: finished ? false : timerStillGoing,
         questionVisibleOnTv: finished ? false : timerStillGoing,
         message: finished
-          ? `P2 answered all 5 — ${rapidP2Total} pts.`
+          ? `P2 answered all ${rapidCount} — ${rapidP2Total} pts.`
           : `Logged (+${points}). ${rapidDeck.length} left in the deck.`,
       };
       if (finished) {
@@ -931,7 +975,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         rapidDeck,
         rapidFireIndex: nextIndex,
         currentQuestion:
-          RAPID_FIRE_SET.questions[nextIndex] ?? state.currentQuestion,
+          state.rapidQuestions[nextIndex] ?? state.currentQuestion,
         rapidQuestionVisible: state.rapidQuestionVisible || state.timerRunning,
         questionVisibleOnTv: state.questionVisibleOnTv || state.timerRunning,
         message: `Passed Q${current + 1} — will come back if time remains.`,
@@ -950,7 +994,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         return state;
       }
       const question =
-        RAPID_FIRE_SET.questions[state.rapidFireIndex] ?? state.currentQuestion;
+        state.rapidQuestions[state.rapidFireIndex] ?? state.currentQuestion;
       if (!state.rapidTimerStarted) {
         const seconds =
           state.phase === "rapidFireP1"
@@ -967,7 +1011,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
           timerRunning: true,
           timerLabel: label,
           currentQuestion: question,
-          message: `Timer started — answer all 5 in ${seconds}s. Pass to skip and revisit.`,
+          message: `Timer started — answer all ${state.rapidQuestions.length} in ${seconds}s. Pass to skip and revisit.`,
         });
       }
       return withUndo(state, {
@@ -990,30 +1034,11 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
     case "EVALUATE_RAPID_SCORE": {
       const combined = state.rapidP1Total + state.rapidP2Total;
       if (combined >= RAPID_FIRE_TARGET) {
-        const jumbled = shuffle([...FINAL_ROUND.orderedAnswers]);
         return withUndo(state, {
-          ...state,
-          phase: "finalRound",
-          currentQuestion: {
-            id: FINAL_ROUND.id,
-            prompt: FINAL_ROUND.prompt,
-            answers: FINAL_ROUND.orderedAnswers.map((text, index) => ({
-              text,
-              points: 6 - index,
-            })),
-          },
-          finalJumbled: jumbled,
-          finalSubmitted: [],
-          finalCorrect: null,
-          finalCorrectCount: null,
-          finalQuestionVisible: false,
-          finalOptionsVisible: false,
-          ...clearFinalDrag(),
-          board: [],
-          buzzersOpen: false,
-          rapidQuestionVisible: false,
-          ...clearAnswerWindow(),
-          message: `${combined} points — jumble unlocked. Reveal question when ready.`,
+          ...startFinalRoundState(
+            state,
+            `${combined} points — jumble unlocked. Reveal question when ready.`,
+          ),
           ...cue(state, "scoresAllot", true),
         });
       }
@@ -1055,10 +1080,10 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
     case "SUBMIT_FINAL_ORDER": {
       const correctCount = action.payload.order.reduce(
         (count, item, index) =>
-          item === FINAL_ROUND.orderedAnswers[index] ? count + 1 : count,
+          item === state.finalOrderedAnswers[index] ? count + 1 : count,
         0,
       );
-      const correct = correctCount === FINAL_ROUND.orderedAnswers.length;
+      const correct = correctCount === state.finalOrderedAnswers.length;
       return withUndo(state, {
         ...state,
         finalSubmitted: action.payload.order,
@@ -1070,7 +1095,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
         timerRunning: false,
         message: correct
           ? "Perfect order — grand prize!"
-          : `${correctCount}/${FINAL_ROUND.orderedAnswers.length} correct.`,
+          : `${correctCount}/${state.finalOrderedAnswers.length} correct.`,
         ...(correct
           ? cue(state, "scoresAllot", true)
           : cue(state, "strike")),
