@@ -63,11 +63,12 @@ const TeamPicker = ({ roomCode, onSelect }: TeamPickerProps) => {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Image
-              src={ASSETS.brandMark}
+              src={ASSETS.logoLite}
               alt="Family Weekend"
-              width={48}
-              height={48}
-              className="h-auto w-12 rounded-lg"
+              width={56}
+              height={56}
+              className="h-auto w-12 object-contain"
+              priority
             />
             <p className="font-[family-name:var(--font-heading)] text-xl font-semibold text-amber-300">
               Family panel
@@ -131,11 +132,11 @@ const FamilyPlay = ({ roomCode, teamId, role }: FamilyPlayProps) => {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Image
-              src={ASSETS.brandMark}
+              src={ASSETS.logoLite}
               alt="Family Weekend"
-              width={48}
-              height={48}
-              className="h-auto w-12 rounded-lg"
+              width={56}
+              height={56}
+              className="h-auto w-12 object-contain"
             />
             <div>
               <p className="font-[family-name:var(--font-heading)] text-xl font-semibold text-amber-300">

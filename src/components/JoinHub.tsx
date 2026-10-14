@@ -23,19 +23,18 @@ const JoinHub = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-[#070b16]/55 via-[#0b1220]/85 to-[#070b16]" />
 
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-3xl flex-col justify-center px-6 py-10">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
           <Image
-            src={ASSETS.brandMark}
+            src={ASSETS.logoLite}
             alt="Family Weekend"
-            width={80}
-            height={80}
-            className="h-auto w-20 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
+            width={120}
+            height={120}
+            priority
+            className="h-auto w-24 object-contain sm:w-[7.5rem]"
           />
           <div>
-            <h1 className="font-[family-name:var(--font-heading)] text-5xl font-semibold tracking-tight text-amber-300 md:text-6xl">
-              Family Weekend
-            </h1>
-            <p className="mt-1 max-w-md text-slate-300">
+            <h1 className="sr-only">Family Weekend</h1>
+            <p className="max-w-md text-lg text-slate-300">
               Host tablet, TV board, and family buzzers — one live room.
             </p>
           </div>

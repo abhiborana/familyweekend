@@ -73,18 +73,17 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
 
   if (state.tvView === "branding") {
     return (
-      <TvShell>
-        <div className="relative z-10 grid min-h-[100dvh] place-items-center px-6">
-          <Image
-            src={ASSETS.brandMark}
-            alt="Family Weekend"
-            width={420}
-            height={420}
-            priority
-            className="h-auto w-[min(70vw,28rem)] drop-shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
-          />
-        </div>
-      </TvShell>
+      <div className="relative grid min-h-[100dvh] place-items-center overflow-hidden bg-[#070b16] px-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(245,215,110,0.12),_transparent_55%)]" />
+        <Image
+          src={ASSETS.logoLite}
+          alt="Family Weekend"
+          width={560}
+          height={560}
+          priority
+          className="relative z-10 h-auto w-[min(72vw,26rem)] object-contain drop-shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+        />
+      </div>
     );
   }
 
@@ -150,17 +149,15 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <Image
-              src={ASSETS.brandMark}
+              src={ASSETS.logoLite}
               alt="Family Weekend"
-              width={72}
-              height={72}
-              className="h-auto w-[72px] rounded-xl shadow-[0_8px_30px_rgba(15,23,42,0.45)]"
+              width={88}
+              height={88}
+              className="h-auto w-[72px] object-contain md:w-[88px]"
+              priority
             />
             <div>
-              <h1 className="font-[family-name:var(--font-heading)] text-4xl font-semibold tracking-tight text-amber-300 md:text-5xl">
-                Family Weekend
-              </h1>
-              <p className="mt-1 font-[family-name:var(--font-heading)] text-xl font-medium text-white md:text-2xl">
+              <p className="font-[family-name:var(--font-heading)] text-xl font-medium text-white md:text-2xl">
                 {getRoundDisplayName(state)}
               </p>
               {showBoard ? (

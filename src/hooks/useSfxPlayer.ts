@@ -1,31 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { ASSETS, type SfxCue } from "@/constants/assets";
-
-const SRC: Record<Exclude<SfxCue, "none">, string> = {
-  strike: ASSETS.sfx.strike,
-  scoresAllot: ASSETS.sfx.scoresAllot,
-  buzzerPressed: ASSETS.sfx.buzzerPressed,
-  buzzer: ASSETS.sfx.buzzer,
-  revealAnswer: ASSETS.sfx.revealAnswer,
-};
+import { useEffect } from "react";
+import type { SfxCue } from "@/constants/assets";
+import { playSfx, preloadSfx } from "@/lib/sfxCache";
 
 const useSfxPlayer = (cue: SfxCue, nonce: number) => {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    void preloadSfx();
+  }, []);
 
   useEffect(() => {
     if (cue === "none" || nonce === 0) return;
-    const src = SRC[cue];
-    if (!src) return;
-
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
-    audioRef.current.src = src;
-    void audioRef.current.play().catch(() => {
-      // Autoplay may be blocked until user gesture on some browsers.
-    });
+    void playSfx(cue);
   }, [cue, nonce]);
 };
 

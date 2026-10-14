@@ -1,5 +1,9 @@
 export const ASSETS = {
-  brandMark: "/brand-mark.png",
+  /** Light logo for dark UI chrome and branding view. */
+  logoLite: "/logo-lite.png",
+  logo: "/logo.png",
+  /** @deprecated Prefer logoLite — kept as alias for existing imports. */
+  brandMark: "/logo-lite.png",
   boardArt: "/board-art.png",
   sfx: {
     strike: "/strike.mp3",
