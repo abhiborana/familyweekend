@@ -1,6 +1,9 @@
 export const getPartyHost = (): string => {
-  if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_PARTYKIT_HOST) {
-    return process.env.NEXT_PUBLIC_PARTYKIT_HOST;
+  if (typeof process !== "undefined") {
+    const host =
+      process.env.NEXT_PUBLIC_PARTY_HOST ??
+      process.env.NEXT_PUBLIC_PARTYKIT_HOST;
+    if (host) return host;
   }
   return "127.0.0.1:1999";
 };

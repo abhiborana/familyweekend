@@ -1,4 +1,5 @@
-import type * as Party from "partykit/server";
+import { routePartykitRequest, Server } from "partyserver";
+import type { Connection } from "partyserver";
 import { applyAction, createInitialState } from "../src/engine";
 import type { ClientRole, GameAction, GameState, TeamId } from "../src/engine/types";
 
@@ -71,23 +72,28 @@ const HOST_ONLY = new Set<GameAction["type"]>([
   "SET_ROOM_CODE",
 ]);
 
-export default class GameRoom implements Party.Server {
-  state: GameState;
+export class GameRoom extends Server {
+  state!: GameState;
   roles = new Map<string, ClientRole>();
 
-  constructor(readonly room: Party.Room) {
-    this.state = createInitialState(room.id.toUpperCase());
+  onStart() {
+    this.state = createInitialState(this.name.toUpperCase());
   }
 
-  onConnect(connection: Party.Connection) {
+  onConnect(connection: Connection) {
     this.send(connection, { type: "state", state: this.stripSnapshot(this.state) });
   }
 
-  onClose(connection: Party.Connection) {
+  onClose(connection: Connection) {
     this.roles.delete(connection.id);
   }
 
-  onMessage(message: string, sender: Party.Connection) {
+  onMessage(sender: Connection, message: string | ArrayBuffer) {
+    if (typeof message !== "string") {
+      this.send(sender, { type: "error", message: "Invalid message" });
+      return;
+    }
+
     let parsed: ClientMessage;
     try {
       parsed = JSON.parse(message) as ClientMessage;
@@ -141,12 +147,19 @@ export default class GameRoom implements Party.Server {
       type: "state",
       state: this.stripSnapshot(this.state),
     };
-    this.room.broadcast(JSON.stringify(payload));
+    this.broadcast(JSON.stringify(payload));
   }
 
-  private send(connection: Party.Connection, payload: ServerMessage) {
+  private send(connection: Connection, payload: ServerMessage) {
     connection.send(JSON.stringify(payload));
   }
 }
 
-GameRoom satisfies Party.Worker;
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    return (
+      (await routePartykitRequest(request, env)) ||
+      new Response("Not Found", { status: 404 })
+    );
+  },
+} satisfies ExportedHandler<Env>;

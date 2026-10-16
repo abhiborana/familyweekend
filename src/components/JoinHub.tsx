@@ -63,9 +63,9 @@ const JoinHub = () => {
           </div>
 
           <p className="mt-5 text-xs text-slate-400">
-            Run <code className="text-amber-200">pnpm partykit:dev</code> locally alongside{" "}
+            Run <code className="text-amber-200">pnpm party:dev</code> locally alongside{" "}
             <code className="text-amber-200">pnpm dev</code>. Set{" "}
-            <code className="text-amber-200">NEXT_PUBLIC_PARTYKIT_HOST</code> for deploy.
+            <code className="text-amber-200">NEXT_PUBLIC_PARTY_HOST</code> for deploy.
           </p>
         </div>
       </div>

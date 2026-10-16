@@ -83,7 +83,7 @@ const useGameRoom = (role: ClientRole, roomCode: string) => {
     const handleError = () => {
       if (disposed) return;
       useGameStore.getState().setConnectionError(
-        `PartyKit connection error — expected ${getPartyHost()}. Restart with pnpm partykit:dev`,
+        `PartyServer connection error — expected ${getPartyHost()}. Restart with pnpm party:dev`,
       );
     };
 
