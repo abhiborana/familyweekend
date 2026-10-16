@@ -4,7 +4,8 @@ const normalize = (value: string): string =>
   value
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s]/g, "")
+    // Keep Latin + Devanagari letters/digits so Hindi answers still match.
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
     .replace(/\s+/g, " ");
 
 export const findAnswerIndex = (
