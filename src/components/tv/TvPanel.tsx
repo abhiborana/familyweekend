@@ -1,32 +1,34 @@
 "use client";
 
 import ConnectionBadge from "@/components/ConnectionBadge";
-import { ASSETS } from "@/constants/assets";
+import { ASSETS, type SfxCue } from "@/constants/assets";
 import { getOpposingTeam, getRoundDisplayName } from "@/engine";
 import type { RapidAnswer } from "@/engine/types";
 import useGameRoom from "@/hooks/useGameRoom";
 import useSfxPlayer from "@/hooks/useSfxPlayer";
 import confetti from "canvas-confetti";
+import { X } from "lucide-react";
 import Image from "next/image";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 type TvPanelProps = {
   roomCode: string;
 };
 
+const STEAL_FAIL_CONFETTI_DELAY_MS = 1200;
+const STRIKE_FLASH_MS = 1100;
+
 const TvPanel = ({ roomCode }: TvPanelProps) => {
   const { state, connected, connectionError } = useGameRoom("tv", roomCode);
   useSfxPlayer(state.sfxCue, state.sfxNonce);
+  useTvConfetti(state.confettiNonce, state.sfxCue);
 
-  useEffect(() => {
-    if (state.confettiNonce === 0) return;
-    void confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { y: 0.65 },
-      colors: ["#f5d76e", "#f0a830", "#fff7d6", "#e8c547"],
-    });
-  }, [state.confettiNonce]);
+  const withOverlay = (node: ReactNode) => (
+    <>
+      <StrikeFlashOverlay cue={state.sfxCue} nonce={state.sfxNonce} />
+      {node}
+    </>
+  );
 
   const stealerTeam =
     state.phase === "steal" && state.controllingTeam
@@ -81,7 +83,7 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
               : "gameplay";
 
   if (state.tvView === "branding") {
-    return (
+    return withOverlay(
       <TvViewStage key={viewMode} mode={viewMode}>
         <div
           className="relative grid min-h-[100dvh] place-items-center overflow-hidden px-6"
@@ -96,12 +98,12 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
             className="tv-brand-logo relative z-10 h-auto w-[min(72vw,26rem)] object-contain"
           />
         </div>
-      </TvViewStage>
+      </TvViewStage>,
     );
   }
 
   if (state.tvView === "scores") {
-    return (
+    return withOverlay(
       <TvViewStage key={viewMode} mode={viewMode}>
         <div
           className="relative flex min-h-[100dvh] max-w-full flex-col items-center justify-center gap-8 px-6 py-10"
@@ -130,13 +132,13 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
             />
           </div>
         </div>
-      </TvViewStage>
+      </TvViewStage>,
     );
   }
 
   if (showBuzzerFocus) {
     const winner = state.buzzerWinner;
-    return (
+    return withOverlay(
       <TvViewStage key={viewMode} mode={viewMode}>
         <TvShell>
           <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-6xl flex-col items-center justify-center gap-10 px-6 py-10">
@@ -166,11 +168,11 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
             ) : null}
           </div>
         </TvShell>
-      </TvViewStage>
+      </TvViewStage>,
     );
   }
 
-  return (
+  return withOverlay(
     <TvViewStage key={viewMode} mode={viewMode}>
     <TvShell>
       <div className="tv-gameplay-panel relative z-10 mx-auto flex min-h-[100dvh] max-w-7xl flex-col px-6 py-5 md:px-10">
@@ -404,7 +406,60 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
         ) : null}
       </div>
     </TvShell>
-    </TvViewStage>
+    </TvViewStage>,
+  );
+};
+
+const useTvConfetti = (confettiNonce: number, sfxCue: SfxCue) => {
+  useEffect(() => {
+    if (confettiNonce === 0) return;
+    const delay =
+      sfxCue === "strike" ? STEAL_FAIL_CONFETTI_DELAY_MS : 0;
+    const timer = window.setTimeout(() => {
+      void confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.65 },
+        colors: ["#f5d76e", "#f0a830", "#fff7d6", "#e8c547"],
+      });
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [confettiNonce, sfxCue]);
+};
+
+type StrikeFlashOverlayProps = {
+  cue: SfxCue;
+  nonce: number;
+};
+
+const StrikeFlashOverlay = ({ cue, nonce }: StrikeFlashOverlayProps) => {
+  const [flashKey, setFlashKey] = useState(0);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (nonce === 0) return;
+    if (cue !== "strike" && cue !== "buzzer") return;
+    setFlashKey(nonce);
+    setVisible(true);
+    const timer = window.setTimeout(() => setVisible(false), STRIKE_FLASH_MS);
+    return () => window.clearTimeout(timer);
+  }, [cue, nonce]);
+
+  if (!visible || flashKey === 0) return null;
+
+  return (
+    <div
+      key={flashKey}
+      className="strike-flash-overlay pointer-events-none fixed inset-0 z-50 grid place-items-center"
+      aria-hidden
+    >
+      <div className="strike-flash-card grid size-[min(42vw,16rem)] place-items-center rounded-[2rem] border-4 border-rose-400 bg-rose-600/90 shadow-[0_0_80px_rgba(244,63,94,0.45)]">
+        <X
+          className="size-[min(28vw,10rem)] stroke-[3.5] text-white"
+          absoluteStrokeWidth
+        />
+      </div>
+    </div>
   );
 };
 

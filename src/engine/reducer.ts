@@ -628,6 +628,7 @@ export const applyAction = (state: GameState, action: GameAction): GameState => 
     case "MARK_INCORRECT":
     case "GIVE_STRIKE": {
       if (state.phase === "steal" && state.controllingTeam) {
+        // Strike/buzzer first; TV delays confetti when sfxCue is "strike".
         const awarded = awardRound(state, state.controllingTeam);
         return withUndo(state, {
           ...awarded,

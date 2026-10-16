@@ -335,6 +335,48 @@
   }
 }
 
+.strike-flash-overlay {
+  background: rgb(0 0 0 / 0.35);
+  animation: strike-flash-backdrop 1.1s ease-out both;
+}
+
+.strike-flash-card {
+  animation: strike-flash-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes strike-flash-backdrop {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes strike-flash-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.35) rotate(-12deg);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.12) rotate(0deg);
+  }
+  70% {
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .buzzer-waiting-card {
   animation: buzzer-pulse 1.4s ease-in-out infinite;
 }
@@ -438,7 +480,9 @@
   .tv-focus-card--a,
   .tv-focus-card--b,
   .tv-view-eyebrow,
-  .tv-gameplay-panel {
+  .tv-gameplay-panel,
+  .strike-flash-overlay,
+  .strike-flash-card {
     animation: none !important;
   }
 }
