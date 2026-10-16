@@ -206,10 +206,8 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
           <div className="mt-5 grid grid-cols-[minmax(0,0.9fr)_auto_minmax(0,0.9fr)] items-end gap-3 md:gap-6">
             <ScorePill
               name={state.familyA.name}
-              score={state.familyA.score}
               active={teamAActive}
               side="left"
-              compact
               badge={stealerTeam === "A" ? "Steal" : null}
             />
             <div className="min-w-[8rem] text-center md:min-w-[12rem]">
@@ -239,10 +237,8 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
             </div>
             <ScorePill
               name={state.familyB.name}
-              score={state.familyB.score}
               active={teamBActive}
               side="right"
-              compact
               badge={stealerTeam === "B" ? "Steal" : null}
             />
           </div>
@@ -250,17 +246,13 @@ const TvPanel = ({ roomCode }: TvPanelProps) => {
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <ScorePill
               name={state.familyA.name}
-              score={state.familyA.score}
-              active={false}
+              active={teamAActive}
               side="left"
-              compact
             />
             <ScorePill
               name={state.familyB.name}
-              score={state.familyB.score}
-              active={false}
+              active={teamBActive}
               side="right"
-              compact
             />
           </div>
         )}
@@ -595,36 +587,26 @@ const BoardFlipCard = ({
 
 type ScorePillProps = {
   name: string;
-  score: number;
   active: boolean;
   side: "left" | "right";
-  compact?: boolean;
   badge?: string | null;
 };
 
-const ScorePill = ({ name, score, active, side, compact, badge }: ScorePillProps) => (
+const ScorePill = ({ name, active, side, badge }: ScorePillProps) => (
   <div
-    className={`rounded-2xl border px-3 py-2 transition duration-300 md:px-4 md:py-3 ${active
-      ? "scale-[1.02] border-amber-300/50 bg-amber-400/15 shadow-[0_0_40px_rgba(245,215,110,0.15)]"
-      : "border-white/10 bg-black/35"
-      } ${side === "right" ? "md:text-right" : ""}`}
+    className={`rounded-2xl border px-4 py-3 transition duration-300 md:px-5 md:py-4 ${
+      active
+        ? "scale-[1.03] border-amber-300/60 bg-amber-400/20 shadow-[0_0_40px_rgba(245,215,110,0.2)]"
+        : "border-white/10 bg-black/35 opacity-80"
+    } ${side === "right" ? "md:text-right" : ""}`}
   >
     {badge ? (
       <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-rose-300">
         {badge}
       </p>
     ) : null}
-    <p
-      className={`truncate font-[family-name:var(--font-heading)] font-semibold ${compact ? "text-base md:text-lg" : "text-xl"
-        }`}
-    >
+    <p className="truncate font-[family-name:var(--font-heading)] text-xl font-semibold md:text-2xl">
       {name}
-    </p>
-    <p
-      className={`font-[family-name:var(--font-heading)] font-semibold tabular-nums text-amber-300 ${compact ? "text-2xl md:text-3xl" : "text-4xl"
-        }`}
-    >
-      {score}
     </p>
   </div>
 );
